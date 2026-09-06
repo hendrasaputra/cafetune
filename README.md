@@ -109,6 +109,7 @@ interact with the page, which is why the sound starts on the button press rather
 | `favicon.svg` | Pixel coffee cup, drawn in the site's amber and coral. |
 | `robots.txt`, `sitemap.xml` | Lets search engines index the page. |
 | `.github/workflows/deploy.yml` | Optional. Only used if you deploy via GitHub Actions. |
+| `LICENSE` | MIT for the code, with the brand and copy carved out. |
 
 ## Changing it
 
@@ -121,4 +122,24 @@ harmony is section 3, the band is section 4, the room is section 5.
 
 ---
 
-© 2026 [hendrasaputra.com](https://hendrasaputra.com/). All rights reserved.
+## Licence
+
+The code is MIT licensed. Read `LICENSE` for the full text. In short: take it,
+change it, ship it, sell it — just keep the copyright notice in the source.
+
+The licence covers code and nothing else. These stay © 2026 hendrasaputra.com,
+all rights reserved:
+
+- the names "Pixelized Thoughts", "Cafetune", "hensap" and "Hendra Saputra"
+- the `hensap@pixelized:~$` mark and the visual identity around it
+- `og.png` and `favicon.svg`
+- the written copy on the page and in this README
+
+So you are welcome to fork the audio engine and the layout. Give the result
+your own name and your own artwork.
+
+The four typefaces load from Google Fonts at runtime and are never copied into
+this repository, so nothing here redistributes them. They are IBM Plex Mono,
+VT323, Silkscreen and Newsreader, all under the SIL Open Font License.
+
+© 2026 [hendrasaputra.com](https://hendrasaputra.com/)
