@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark light">
-<title>Cafetune — endless chiptune for a room full of people</title>
-<meta name="description" content="A café that never closes and never repeats. A chiptune band and a room full of talking people, both written live in your browser. By Hendra Saputra.">
+<title>Cafetune — endless ambient chiptune for a room full of people</title>
+<meta name="description" content="Ambient chiptune that never repeats. A generative 8-bit band and a room full of talking people, both synthesised live in your browser with the Web Audio API. By Hendra Saputra.">
 <link rel="canonical" href="https://cafetune.hensap.id/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Pixelized Thoughts">
 <meta property="og:url" content="https://cafetune.hensap.id/">
-<meta property="og:title" content="Cafetune — endless chiptune for a room full of people">
-<meta property="og:description" content="A café that never closes and never repeats. Nothing here is a recording: the band and the crowd are both synthesised live, one bar at a time.">
+<meta property="og:title" content="Cafetune — endless ambient chiptune for a room full of people">
+<meta property="og:description" content="Ambient chiptune that never repeats. Nothing here is a recording: the 8-bit band and the crowd are both synthesised live, one bar at a time.">
 <meta property="og:image" content="https://cafetune.hensap.id/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="author" content="Hendra Saputra">
@@ -186,7 +186,7 @@ h2.prompt .ps1{color:var(--amber2); font-weight:400}
 
 <main>
   <h1 class="title">Cafetune</h1>
-  <p class="tagline">A café that never closes, playing music that <em>never repeats</em>.</p>
+  <p class="tagline">Ambient chiptune for a café that never closes, playing music that <em>never repeats</em>.</p>
   <p class="runline"><span class="ps1">hensap@pixelized:~$</span> cafetune --open --busy=60<span class="cursor" aria-hidden="true"></span></p>
 
   <section class="console" aria-label="Player">
@@ -194,6 +194,7 @@ h2.prompt .ps1{color:var(--amber2); font-weight:400}
       <div class="readrow">
         <div>playing <b id="chord">—</b></div>
         <div>bar <b id="barnum">0</b></div>
+        <div>mix <b id="section">&mdash;</b></div>
         <div id="status" data-open="false">closed</div>
       </div>
       <canvas id="viz" width="620" height="150" aria-hidden="true"></canvas>
@@ -204,7 +205,7 @@ h2.prompt .ps1{color:var(--amber2); font-weight:400}
         <button class="start" id="power" data-on="false">Open the cafe</button>
         <div class="tempo">
           <label for="bpm">tempo <output id="bpmout">108 bpm</output></label>
-          <input type="range" id="bpm" min="72" max="150" value="108" step="1" aria-label="Tempo in beats per minute">
+          <input type="range" id="bpm" min="72" max="180" value="108" step="1" aria-label="Tempo in beats per minute">
         </div>
       </div>
 
@@ -257,13 +258,19 @@ h2.prompt .ps1{color:var(--amber2); font-weight:400}
     <p>Press <b>Open the cafe</b> and leave it running. Everything keeps working while you move the faders, so you never need to restart it.</p>
     <p>Nothing on this page is a recording. Five parts are written one bar at a time while you listen. The bass walks in quarter notes and steps onto the next chord from a half-step away, the way an upright player does. The chords hit on the off-beats as fast arpeggios through a single oscillator, which is how 8-bit consoles faked a chord and why they sound like a chip instead of an organ. The melody keeps a short idea for two bars, bends one note, then throws it away and writes a new one.</p>
     <p>The room is not a noise recording either. Every murmur is one synthesised voice: a pitch, three vowel filters that slide as it talks, and a syllable rhythm of about four a second. Glasses and cups ring on clashing overtones the way real objects do. Each person stands somewhere specific, and the ones further away lose their consonants and pick up more of the room.</p>
+    <p>Left alone, it strips itself back. Every twenty-four to forty bars the band drops to bass and drums for four bars, then puts the chords back, then the melody. The band also plays completely dry: there is no reverb on it at all, and the depth you hear is each melody note played again quieter an eighth later. That is how the original hardware faked an echo, by spending a channel on it instead of a effects unit.</p>
+    <p>This sits in the corner of chiptune that the scene calls <b>ambient</b> — chip timbres used for texture rather than for energy, which is a long way from the fast, punchy 8-bit music most people picture. The parts are the ones a Nintendo had to work with: two pulse channels for the tune and the chords, a triangle for the bass, and a noise channel for the drums. Each idea picks its own pulse width and switches to a second one partway through long notes, which is how a tracker changes the colour of a sound without a filter.</p>
     <p>To use this while you work, put <b>Melody</b> near 20 and <b>Room</b> near 70. The tune stops competing for your attention and turns into texture.</p>
   </div>
 
   <h2 class="prompt"><span class="ps1">hensap@pixelized:~$</span> cafetune --specs</h2>
   <ul class="spec">
     <li><span>engine</span><span>Web Audio, hand-scheduled, no libraries and no audio files</span></li>
+    <li><span>channels</span><span>two pulse, one triangle, one noise, as a Nintendo had</span></li>
     <li><span>harmony</span><span>six jazz loops, reshuffled every four to eight bars, ~38 chords</span></li>
+    <li><span>echo</span><span>re-triggered notes, not reverb; the band is bone dry</span></li>
+    <li><span>arrangement</span><span>strips to bass and drums every 24-40 bars, then rebuilds</span></li>
+    <li><span>tempo</span><span>72 to 180 bpm, swung eighths</span></li>
     <li><span>voices</span><span>sawtooth source through three moving formant filters</span></li>
     <li><span>crowd</span><span>one person at a quiet moment, nine at a busy one</span></li>
     <li><span>page weight</span><span>one HTML file, no tracking, no network calls after load</span></li>
@@ -335,7 +342,7 @@ function makeRoom(){
 function initAudio(){
   ctx = new (window.AudioContext||window.webkitAudioContext)();
 
-  waves[0.5]=makePulse(0.5); waves[0.25]=makePulse(0.25); waves[0.125]=makePulse(0.125);
+  [0.5,0.375,0.25,0.125,0.0625].forEach(function(d){ waves[d]=makePulse(d); });
 
   noiseBuf = ctx.createBuffer(1, ctx.sampleRate*2, ctx.sampleRate);
   var nd=noiseBuf.getChannelData(0);
@@ -352,9 +359,17 @@ function initAudio(){
 
   analyser = ctx.createAnalyser(); analyser.fftSize=512; analyser.smoothingTimeConstant=0.72;
 
-  function bus(v){ var g=ctx.createGain(); g.gain.value=v; g.connect(lim); g.connect(roomSend); g.connect(analyser); return g; }
-  busLead=bus(mix.lead); busComp=bus(mix.comp); busBass=bus(mix.bass);
-  busDrum=bus(mix.drums); busCafe=bus(mix.cafe*0.9);
+  /* The band is DRY. Real chips had no reverb — depth came from re-triggering
+     a note quieter a moment later (see the echo in melody()). Only the room,
+     which genuinely is a room, feeds the convolver. */
+  function bus(v,wet){
+    var g=ctx.createGain(); g.gain.value=v;
+    g.connect(lim); g.connect(analyser);
+    if(wet) g.connect(roomSend);
+    return g;
+  }
+  busLead=bus(mix.lead,false); busComp=bus(mix.comp,false); busBass=bus(mix.bass,false);
+  busDrum=bus(mix.drums,false); busCafe=bus(mix.cafe*0.9,true);
 
   lim.connect(master); master.connect(ctx.destination);
 }
@@ -362,27 +377,54 @@ function initAudio(){
 /* ============================================================
    2. INSTRUMENT VOICES
    ============================================================ */
+/* One note. o.dutySeq switches the pulse width partway through, which is how a
+   tracker gets a note to change colour without a filter. o.slide scoops up into
+   the pitch from below. */
 function chip(t, midi, dur, o){
   o=o||{};
-  var dest=o.dest||busLead, peak=o.gain||0.16, duty=o.duty||0.5;
-  var osc=ctx.createOscillator();
-  osc.setPeriodicWave(waves[duty]);
-  osc.frequency.setValueAtTime(mtof(midi),t);
-  var g=ctx.createGain();
-  g.gain.setValueAtTime(0.0001,t);
-  g.gain.exponentialRampToValueAtTime(peak, t+0.006);
-  g.gain.exponentialRampToValueAtTime(peak*0.6, t+Math.min(0.22,dur*0.55));
-  g.gain.exponentialRampToValueAtTime(0.0001, t+dur+0.04);
-  osc.connect(g); g.connect(dest);
+  var dest=o.dest||busLead, peak=o.gain||0.16;
+  var seq=o.dutySeq || [o.duty||0.5];
+
+  var env=ctx.createGain();
+  env.gain.setValueAtTime(0.0001,t);
+  env.gain.exponentialRampToValueAtTime(peak, t+0.006);
+  env.gain.exponentialRampToValueAtTime(peak*0.6, t+Math.min(0.22,dur*0.55));
+  env.gain.exponentialRampToValueAtTime(0.0001, t+dur+0.04);
+  env.connect(dest);
+
+  var lfo=null, la=null;
   if(o.vib && dur>0.28){
-    var lfo=ctx.createOscillator(), la=ctx.createGain();
-    lfo.frequency.value=5.6; la.gain.value=0;
+    lfo=ctx.createOscillator(); la=ctx.createGain();
+    lfo.frequency.value=5.6;
     la.gain.setValueAtTime(0,t+0.16);
     la.gain.linearRampToValueAtTime(o.vib, t+0.34);
-    lfo.connect(la); la.connect(osc.detune);
-    lfo.start(t); lfo.stop(t+dur+0.06);
+    lfo.connect(la); lfo.start(t); lfo.stop(t+dur+0.08);
   }
-  osc.start(t); osc.stop(t+dur+0.07);
+
+  var segLen=dur/seq.length, f=mtof(midi);
+  for(var i=0;i<seq.length;i++){
+    var st=t+i*segLen, last=(i===seq.length-1);
+    var osc=ctx.createOscillator();
+    osc.setPeriodicWave(waves[seq[i]] || waves[0.5]);
+    if(i===0 && o.slide){
+      osc.frequency.setValueAtTime(mtof(midi-o.slide), st);
+      osc.frequency.exponentialRampToValueAtTime(f, st+Math.min(0.055,dur*0.35));
+    } else osc.frequency.setValueAtTime(f, st);
+
+    var gate=ctx.createGain();
+    gate.gain.setValueAtTime(i===0?1:0, t);
+    if(i>0){
+      gate.gain.setValueAtTime(0, st-0.003);
+      gate.gain.linearRampToValueAtTime(1, st+0.003);
+    }
+    if(!last){
+      gate.gain.setValueAtTime(1, st+segLen-0.003);
+      gate.gain.linearRampToValueAtTime(0, st+segLen+0.003);
+    }
+    osc.connect(gate); gate.connect(env);
+    if(la) la.connect(osc.detune);
+    osc.start(st); osc.stop(st+segLen+(last?0.07:0.006));
+  }
 }
 
 /* one oscillator cycling chord tones very fast = the classic NES chord */
@@ -465,6 +507,26 @@ var PROGS = [
 ];
 
 var prog = PROGS[0], progPos = 0, barCount = 0;
+
+/* Long-form shape. Without this the music sits at one intensity forever, which
+   is what makes endless generative music tiring. Every 24-40 bars it strips
+   back to bass and drums, then puts the parts back one at a time. All counts
+   are multiples of 4 so a change never lands mid-phrase. */
+var arr = {lead:1, comp:1, bass:1, drums:1};
+var arrPhase = "full", arrBarsLeft = 24;
+function advanceArrangement(){
+  if(--arrBarsLeft > 0) return;
+  if(arrPhase==="full"){
+    arrPhase="break";    arr={lead:0, comp:0,    bass:1, drums:0.55}; arrBarsLeft=4;
+  } else if(arrPhase==="break"){
+    arrPhase="building"; arr={lead:0, comp:0.75, bass:1, drums:0.85}; arrBarsLeft=4;
+  } else if(arrPhase==="building"){
+    arrPhase="restore";  arr={lead:0.75, comp:0.9, bass:1, drums:1};  arrBarsLeft=4;
+  } else {
+    arrPhase="full";     arr={lead:1, comp:1, bass:1, drums:1};
+    arrBarsLeft = pick([24,32,40]);
+  }
+}
 var chordNow = {root:0, q:"maj7"};
 
 function advanceChord(){
@@ -522,7 +584,7 @@ function walkingBass(c, nextRoot, t, beat){
   out.push(nearBass(nextRoot + pick([-1,1]), out[2]));
 
   for(var b=0;b<4;b++){
-    bassNote(t + b*beat, out[b], beat*0.86, b===0?1:0.82);
+    bassNote(t + b*beat, out[b], beat*0.86, (b===0?1:0.82)*arr.bass);
   }
   lastBass = out[3];
 }
@@ -531,6 +593,7 @@ var COMP_SLOTS = [
   [2,10],[6,14],[2,6,14],[10,14],[4,10],[2,6,10,14],[6,10],[14]
 ];
 function comping(c, t, sixteenth, stepT){
+  if(arr.comp<=0) return;
   var voic = chordTones(c,5);
   if(chance(0.5)) voic = voic.map(function(n,i){ return i===0? n+12 : n; }); // drop the root up
   voic = voic.slice().sort(function(a,b){ return a-b; });
@@ -539,7 +602,8 @@ function comping(c, t, sixteenth, stepT){
     if(!chance(0.55 + mix.busy*0.4)) continue;
     var s = slots[i];
     chipChord(t + stepT(s), voic, sixteenth*rnd(1.6,3.2), {
-      gain: 0.085*rnd(0.8,1.15), duty: chance(0.5)?0.25:0.125
+      gain: Math.max(0.085*rnd(0.8,1.15)*arr.comp, 0.0004),
+      duty: chance(0.5)?0.25:0.125
     });
   }
 }
@@ -559,6 +623,7 @@ var RHY = [
 var motif=null, motifAge=0, lastLead=76;
 var LEAD_LO = 69, LEAD_HI = 86;   /* A4 to D6 */
 
+var DUTIES=[0.5,0.375,0.25,0.125,0.0625];
 function newMotif(){
   var r = pick(RHY);
   var contour=[ (Math.random()*5|0) ];
@@ -566,18 +631,21 @@ function newMotif(){
     var step = chance(0.7) ? pick([-1,1,-2,2]) : pick([-4,-3,3,4,5]);
     contour.push(contour[i-1]+step);
   }
-  return { r:r, c:contour };
+  /* each idea gets its own pulse width, and a second one to switch to */
+  return { r:r, c:contour, d:pick(DUTIES), d2:pick(DUTIES) };
 }
 function mutate(m){
   var r=m.r.slice(), c=m.c.slice();
+  var du=chance(0.4)?pick(DUTIES):m.d;   /* not `d` — mutate already uses that below */
   var k=(Math.random()*c.length)|0;
   c[k]+=pick([-2,-1,1,2]);
   if(chance(0.35) && r.length>3){ var d=(Math.random()*r.length)|0; r.splice(d,1); c.splice(d,1); }
   if(chance(0.3)){ for(var i=0;i<c.length;i++) c[i]+=pick([-1,1]); }
-  return {r:r,c:c};
+  return {r:r,c:c,d:du,d2:m.d2};
 }
 
 function melody(c, t, sixteenth, stepT, barInPhrase){
+  if(arr.lead<=0) return;
   if(!motif || motifAge>=pick([4,6,8])){ motif=newMotif(); motifAge=0; }
   else if(motifAge%2===0){ motif=mutate(motif); }
   motifAge++;
@@ -604,12 +672,28 @@ function melody(c, t, sixteenth, stepT, barInPhrase){
     while(midi<LEAD_LO) midi+=12; while(midi>LEAD_HI) midi-=12;
     var nextStep = (i+1<m.r.length) ? m.r[i+1] : 16;
     var dur = Math.max(sixteenth*1.1, (stepT(nextStep)-stepT(step))*0.92);
-    chip(t+stepT(step), midi, dur, {
-      gain: 0.135*rnd(0.85,1.1),
-      duty: 0.25,
+    var lvl = Math.max(0.135*rnd(0.85,1.1)*arr.lead, 0.0005);
+    var at  = t+stepT(step);
+    chip(at, midi, dur, {
+      gain: lvl,
+      /* long notes change pulse width halfway through; short ones hold one */
+      dutySeq: (dur>sixteenth*2.6 && chance(0.55)) ? [m.d, m.d2] : [m.d],
+      slide: chance(0.17) ? pick([1,2]) : 0,
       vib: dur>0.4 ? 16 : 0,
       dest: busLead
     });
+
+    /* Channel echo. No reverb on the band — depth comes from playing the same
+       note again, quieter, an eighth later. This is what the hardware did. */
+    var ed = sixteenth*2;
+    if(chance(0.85)){
+      chip(at+ed, midi, Math.min(dur, ed*0.85),
+           {gain: Math.max(lvl*0.40,0.0004), duty: m.d, dest: busLead});
+      if(chance(0.45)){
+        chip(at+ed*2, midi, Math.min(dur, ed*0.8),
+             {gain: Math.max(lvl*0.16,0.0003), duty: m.d, dest: busLead});
+      }
+    }
     lastLead=midi;
   }
 
@@ -619,27 +703,31 @@ function melody(c, t, sixteenth, stepT, barInPhrase){
     for(var j=0;j<6;j++){
       var n = degToMidi(j*dir + 3, c, start) ;
       while(n<LEAD_LO) n+=12; while(n>LEAD_HI) n-=12;
-      chip(t+stepT(10)+j*sixteenth*0.5, n, sixteenth*0.55, {gain:0.10, duty:0.125});
+      var rt=t+stepT(10)+j*sixteenth*0.5;
+      chip(rt, n, sixteenth*0.55, {gain:Math.max(0.10*arr.lead,0.0004), duty:m.d2});
+      chip(rt+sixteenth*2, n, sixteenth*0.5,
+           {gain:Math.max(0.036*arr.lead,0.0003), duty:m.d2});
       lastLead=n;
     }
   }
 }
 
 function drums(t, sixteenth, stepT, barInPhrase){
-  var v = 1;
+  var v = arr.drums;
+  if(v<=0) return;
   /* jazz ride: 1, 2, swung-and-of-2, 3, 4, swung-and-of-4 */
   var ridePat=[0,4,6,8,12,14];
   for(var i=0;i<ridePat.length;i++){
     ride(t+stepT(ridePat[i]), (ridePat[i]%8===0?1:0.72)*v);
   }
-  if(chance(0.5+mix.busy*0.4)) hat(t+stepT(4),0.9);
-  if(chance(0.5+mix.busy*0.4)) hat(t+stepT(12),0.9);
-  if(chance(0.55)) snare(t+stepT(pick([6,10,14])),0.35);   /* ghost note */
-  if(chance(0.35+mix.busy*0.3)) snare(t+stepT(pick([2,7,11])),0.55);
-  if(chance(0.45)) kick(t+stepT(0),0.7);
-  if(chance(0.4+mix.busy*0.3)) kick(t+stepT(pick([6,10,11])),0.55);
+  if(chance(0.5+mix.busy*0.4)) hat(t+stepT(4),0.9*v);
+  if(chance(0.5+mix.busy*0.4)) hat(t+stepT(12),0.9*v);
+  if(chance(0.55)) snare(t+stepT(pick([6,10,14])),0.35*v);   /* ghost note */
+  if(chance(0.35+mix.busy*0.3)) snare(t+stepT(pick([2,7,11])),0.55*v);
+  if(chance(0.45)) kick(t+stepT(0),0.7*v);
+  if(chance(0.4+mix.busy*0.3)) kick(t+stepT(pick([6,10,11])),0.55*v);
   if(barInPhrase===7 && chance(0.5)){
-    for(var k=0;k<4;k++) snare(t+stepT(12)+k*sixteenth*0.5, 0.4+k*0.12);
+    for(var k=0;k<4;k++) snare(t+stepT(12)+k*sixteenth*0.5, (0.4+k*0.12)*v);
   }
 }
 
@@ -902,6 +990,7 @@ function scheduleBar(t){
     return x;
   }
   var c = advanceChord();
+  advanceArrangement();
   var barInPhrase = barCount % 8;
 
   walkingBass(c, peekNextRoot(), t, beat);
@@ -909,7 +998,7 @@ function scheduleBar(t){
   melody(c, t, sixteenth, stepT, barInPhrase);
   drums(t, sixteenth, stepT, barInPhrase);
 
-  timeline.push({t:t, dur:barDur, chord:c, bar:barCount});
+  timeline.push({t:t, dur:barDur, chord:c, bar:barCount, phase:arrPhase});
   if(timeline.length>8) timeline.shift();
   barCount++;
   return barDur;
@@ -1001,11 +1090,12 @@ function draw(){
       g2.fillRect(W-70+j*14, 8, 9, 9);
     }
     var nm = LET[cur.chord.root] + NAME[cur.chord.q];
-    if(nm!==lastName){ lastName=nm; el.chord.textContent=nm; el.bar.textContent=cur.bar; }
-    else { el.bar.textContent=cur.bar; }
+    if(nm!==lastName){ lastName=nm; el.chord.textContent=nm; }
+    el.bar.textContent=cur.bar;
+    if(cur.phase!==lastPhase){ lastPhase=cur.phase; el.section.textContent=cur.phase; }
   }
 }
-var lastName="";
+var lastName="", lastPhase="";
 
 /* ============================================================
    8. CONTROLS
@@ -1013,6 +1103,7 @@ var lastName="";
 var el = {
   chord:document.getElementById("chord"),
   bar:document.getElementById("barnum"),
+  section:document.getElementById("section"),
   status:document.getElementById("status"),
   power:document.getElementById("power")
 };
@@ -1056,6 +1147,7 @@ el.power.addEventListener("click",function(){
     ctx.resume();
     playing=true;
     barCount=0; progPos=prog.length; motif=null; timeline=[];
+    arr={lead:1,comp:1,bass:1,drums:1}; arrPhase="full"; arrBarsLeft=24;
     nextBarTime = ctx.currentTime + 0.15;
     setBus();
     master.gain.cancelScheduledValues(ctx.currentTime);
@@ -1079,6 +1171,7 @@ el.power.addEventListener("click",function(){
     },900);
     el.power.textContent="Open the cafe"; el.power.dataset.on="false";
     el.status.textContent="closed"; el.status.dataset.open="false"; el.chord.textContent="—";
+    el.section.textContent="—"; lastPhase="";
   }
 });
 
