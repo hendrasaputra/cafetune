@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>Cafetune — endless chiptune for a room full of people</title>
+<meta name="description" content="A café that never closes and never repeats. A chiptune band and a room full of talking people, both written live in your browser. By Hendra Saputra.">
+<link rel="canonical" href="https://cafetune.hensap.id/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Pixelized Thoughts">
+<meta property="og:url" content="https://cafetune.hensap.id/">
+<meta property="og:title" content="Cafetune — endless chiptune for a room full of people">
+<meta property="og:description" content="A café that never closes and never repeats. Nothing here is a recording: the band and the crowd are both synthesised live, one bar at a time.">
+<meta property="og:image" content="https://cafetune.hensap.id/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="author" content="Hendra Saputra">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,600&family=Silkscreen:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<style>
+/* ------------------------------------------------------------------
+   Tokens lifted from hendrasaputra.com so this subdomain reads as
+   part of the same site.
+   ------------------------------------------------------------------ */
+:root{
+  --bg:#f4efe3; --bg2:#eae3d2; --ink:#1c1408; --ink2:#5f4f2e; --dim:#8a7a55;
+  --amber:#b86a00; --amber2:#8a4f00; --line:#d9cfb6; --signal:#c8321a; --blue:#1f3fd6;
+  --scan:0.035; --glow:0 0 0 transparent;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --crt:"VT323",var(--mono);
+  --serif:"Newsreader",Georgia,"Times New Roman",serif;
+  --px:"Silkscreen",var(--mono);
+  --wrap:1120px;
+}
+:root[data-theme="dark"]{
+  --bg:#0b0a08; --bg2:#141108; --ink:#e8dcc0; --ink2:#a89670; --dim:#6f6040;
+  --amber:#ffb000; --amber2:#c98500; --line:#2a2210; --signal:#ff5a3c; --blue:#8b9bff;
+  --scan:0.28; --glow:0 0 18px rgba(255,176,0,.35);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font:15px/1.55 var(--mono); min-height:100vh; position:relative;
+}
+/* the CRT scanlines from the parent site */
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:50;
+  opacity:var(--scan);
+  background:repeating-linear-gradient(0deg, rgb(0 0 0) 0 1px, transparent 1px 3px);
+}
+a{color:var(--amber); text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* ---------------- site chrome ---------------- */
+.top{
+  display:flex; align-items:center; gap:16px;
+  padding:18px 24px; max-width:var(--wrap); margin:0 auto; font-size:14px;
+}
+.top .brand{display:flex; align-items:center; gap:10px; color:var(--ink)}
+.top .brand:hover{color:var(--amber); text-decoration:none}
+.top .ps1{color:var(--amber2)}
+.top .mode{
+  margin-left:auto; white-space:nowrap; appearance:none; background:#fff0;
+  border:1px solid var(--line); color:var(--ink2); font:inherit; font-size:13px;
+  padding:5px 10px; cursor:pointer;
+}
+.top .mode:hover{border-color:var(--amber); color:var(--amber)}
+.top .mode::before{content:"--mode="}
+.top .mode::after{content:"light"}
+:root[data-theme="dark"] .top .mode::after{content:"dark"}
+:focus-visible{outline:2px solid var(--amber); outline-offset:2px}
+
+main{max-width:var(--wrap); margin:0 auto; padding:8px 24px 0}
+
+/* ---------------- hero ---------------- */
+.title{
+  font-family:var(--crt); font-size:clamp(46px,9vw,104px); line-height:.86;
+  color:var(--amber); margin:14px 0 2px; font-weight:400; text-transform:uppercase;
+  text-shadow:var(--glow); letter-spacing:.01em;
+}
+.tagline{
+  font-family:var(--serif); font-weight:300; font-size:clamp(19px,2.4vw,25px);
+  line-height:1.4; color:var(--ink); max-width:30ch; margin:0 0 18px;
+}
+.tagline em{font-style:normal; color:var(--amber)}
+.runline{color:var(--dim); font-size:13px; margin:0 0 26px}
+.runline .ps1{color:var(--amber2)}
+.cursor{
+  display:inline-block; width:8px; height:15px; background:var(--amber);
+  vertical-align:-2px; margin-left:3px; animation:blink 1.1s steps(1) infinite;
+}
+@keyframes blink{50%{opacity:0}}
+
+/* ---------------- the console ---------------- */
+.console{border:1px solid var(--line); background:var(--bg2); margin-bottom:34px}
+.readout{border-bottom:1px solid var(--line); padding:12px 14px 8px}
+.readrow{
+  display:flex; gap:18px; flex-wrap:wrap; justify-content:space-between;
+  font-size:12px; color:var(--dim);
+}
+.readrow b{font-weight:500; color:var(--ink)}
+#status{color:var(--dim)}
+#status[data-open="true"]{color:var(--amber); text-shadow:var(--glow)}
+canvas{display:block; width:100%; height:150px; margin-top:10px; image-rendering:pixelated}
+
+.deck{padding:18px 14px 20px}
+.startrow{display:flex; gap:12px; align-items:stretch; flex-wrap:wrap}
+button.start{
+  font-family:var(--px); font-size:13px; letter-spacing:.02em;
+  color:var(--bg); background:var(--amber); border:1px solid var(--amber);
+  padding:16px 22px; cursor:pointer; flex:1 1 240px; text-align:center;
+}
+button.start:hover{background:var(--amber2); border-color:var(--amber2)}
+button.start[data-on="true"]{background:#fff0; color:var(--amber)}
+.tempo{flex:1 1 240px; border:1px solid var(--line); padding:8px 12px 5px}
+.tempo label{font-size:12px; color:var(--dim); display:block}
+.tempo output{color:var(--ink)}
+
+.faders{margin-top:20px; display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:6px 28px}
+.fader{padding:6px 0}
+.fader .top2{display:flex; justify-content:space-between; align-items:baseline; font-size:13px}
+.fader .name{color:var(--ink); font-weight:500}
+.fader .val{color:var(--amber2)}
+.fader .hint{font-size:12.5px; line-height:1.4; color:var(--dim); margin:2px 0 5px; max-width:44ch}
+
+input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:18px; background:transparent; cursor:pointer; margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:6px; background:var(--line)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:12px; height:20px; margin-top:-7px; background:var(--amber); border:0}
+input[type=range]::-moz-range-track{height:6px; background:var(--line)}
+input[type=range]::-moz-range-thumb{width:12px; height:20px; border:0; border-radius:0; background:var(--amber)}
+input[type=range].sig::-webkit-slider-thumb{background:var(--signal)}
+input[type=range].sig::-moz-range-thumb{background:var(--signal)}
+input[type=range].blu::-webkit-slider-thumb{background:var(--blue)}
+input[type=range].blu::-moz-range-thumb{background:var(--blue)}
+
+.keyrow{margin-top:24px; display:flex; flex-wrap:wrap; gap:7px; align-items:center}
+.keyrow .lab{font-size:12.5px; color:var(--dim); width:100%; margin-bottom:2px}
+.key{
+  font:inherit; font-size:12.5px; padding:7px 11px; cursor:pointer;
+  background:#fff0; color:var(--ink2); border:1px solid var(--line);
+}
+.key:hover{border-color:var(--amber); color:var(--amber)}
+.key[aria-pressed="true"]{background:var(--amber); border-color:var(--amber); color:var(--bg)}
+
+/* ---------------- prose ---------------- */
+h2.prompt{font-size:14px; font-weight:500; color:var(--ink); margin:34px 0 12px}
+h2.prompt .ps1{color:var(--amber2); font-weight:400}
+.prose{font-family:var(--serif); font-weight:300; font-size:17.5px; line-height:1.65; color:var(--ink2); max-width:66ch}
+.prose p{margin:0 0 14px}
+.prose b{color:var(--ink); font-weight:600}
+.prose code{font-family:var(--mono); font-size:.86em; color:var(--amber2)}
+.spec{
+  list-style:none; padding:0; margin:0 0 14px; max-width:66ch;
+  font-family:var(--mono); font-size:13px; color:var(--ink2);
+}
+.spec li{display:flex; gap:12px; padding:7px 0; border-bottom:1px solid var(--line)}
+.spec li span:first-child{color:var(--amber2); flex:0 0 8.5em}
+
+.colophon{
+  max-width:var(--wrap); margin:44px auto 0; padding:20px 24px 26px; font-size:12px;
+  color:var(--dim); display:flex; gap:16px; flex-wrap:wrap; justify-content:space-between;
+  border-top:1px solid var(--line);
+}
+.colophon a{color:var(--ink2)}
+
+@media (max-width:520px){
+  main,.top,.colophon{padding-left:16px; padding-right:16px}
+  .top{gap:10px; font-size:12.5px}
+  canvas{height:124px}
+  .readrow{font-size:11px; gap:10px}
+}
+@media (prefers-reduced-motion:reduce){ .cursor{animation:none} }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a class="brand" href="https://hendrasaputra.com/" rel="home">
+    <span class="ps1">hensap@pixelized:~$</span>
+  </a>
+  <button class="mode" type="button" id="mode" aria-label="Switch between light and dark"></button>
+</header>
+
+<main>
+  <h1 class="title">Cafetune</h1>
+  <p class="tagline">A café that never closes, playing music that <em>never repeats</em>.</p>
+  <p class="runline"><span class="ps1">hensap@pixelized:~$</span> cafetune --open --busy=60<span class="cursor" aria-hidden="true"></span></p>
+
+  <section class="console" aria-label="Player">
+    <div class="readout">
+      <div class="readrow">
+        <div>playing <b id="chord">—</b></div>
+        <div>bar <b id="barnum">0</b></div>
+        <div id="status" data-open="false">closed</div>
+      </div>
+      <canvas id="viz" width="620" height="150" aria-hidden="true"></canvas>
+    </div>
+
+    <div class="deck">
+      <div class="startrow">
+        <button class="start" id="power" data-on="false">Open the cafe</button>
+        <div class="tempo">
+          <label for="bpm">tempo <output id="bpmout">108 bpm</output></label>
+          <input type="range" id="bpm" min="72" max="150" value="108" step="1" aria-label="Tempo in beats per minute">
+        </div>
+      </div>
+
+      <div class="faders">
+        <div class="fader">
+          <div class="top2"><span class="name">Melody</span><span class="val" id="v-lead">70</span></div>
+          <p class="hint">The tune on top. Turn it down to make this pure background.</p>
+          <input type="range" id="f-lead" min="0" max="100" value="70" aria-label="Melody volume">
+        </div>
+        <div class="fader">
+          <div class="top2"><span class="name">Chords</span><span class="val" id="v-comp">60</span></div>
+          <p class="hint">Short stabs between the beats, played as fast arpeggios.</p>
+          <input type="range" id="f-comp" min="0" max="100" value="60" aria-label="Chords volume">
+        </div>
+        <div class="fader">
+          <div class="top2"><span class="name">Bass</span><span class="val" id="v-bass">75</span></div>
+          <p class="hint">A walking bass line that steps up to the next chord.</p>
+          <input type="range" id="f-bass" min="0" max="100" value="75" aria-label="Bass volume">
+        </div>
+        <div class="fader">
+          <div class="top2"><span class="name">Drums</span><span class="val" id="v-drums">55</span></div>
+          <p class="hint">Noise-channel ride, snare and kick. Brushy, not loud.</p>
+          <input type="range" id="f-drums" min="0" max="100" value="55" aria-label="Drums volume">
+        </div>
+        <div class="fader">
+          <div class="top2"><span class="name">Room</span><span class="val" id="v-cafe">45</span></div>
+          <p class="hint">Voices at other tables, glasses, spoons, the door.</p>
+          <input type="range" class="blu" id="f-cafe" min="0" max="100" value="45" aria-label="Cafe room volume">
+        </div>
+        <div class="fader">
+          <div class="top2"><span class="name">How busy it is</span><span class="val" id="v-busy">60</span></div>
+          <p class="hint">More notes, more fills, more people. Low is a quiet Tuesday.</p>
+          <input type="range" class="sig" id="f-busy" min="0" max="100" value="60" aria-label="How busy the cafe is">
+        </div>
+      </div>
+
+      <div class="keyrow">
+        <div class="lab">Pick a key. Each one changes the mood; the band plays the same way.</div>
+        <button class="key" data-key="0" aria-pressed="true">C sunny</button>
+        <button class="key" data-key="5" aria-pressed="false">F warm</button>
+        <button class="key" data-key="10" aria-pressed="false">B&#9837; mellow</button>
+        <button class="key" data-key="3" aria-pressed="false">E&#9837; smoky</button>
+        <button class="key" data-key="8" aria-pressed="false">A&#9837; late</button>
+      </div>
+    </div>
+  </section>
+
+  <h2 class="prompt"><span class="ps1">hensap@pixelized:~$</span> man cafetune</h2>
+  <div class="prose">
+    <p>Press <b>Open the cafe</b> and leave it running. Everything keeps working while you move the faders, so you never need to restart it.</p>
+    <p>Nothing on this page is a recording. Five parts are written one bar at a time while you listen. The bass walks in quarter notes and steps onto the next chord from a half-step away, the way an upright player does. The chords hit on the off-beats as fast arpeggios through a single oscillator, which is how 8-bit consoles faked a chord and why they sound like a chip instead of an organ. The melody keeps a short idea for two bars, bends one note, then throws it away and writes a new one.</p>
+    <p>The room is not a noise recording either. Every murmur is one synthesised voice: a pitch, three vowel filters that slide as it talks, and a syllable rhythm of about four a second. Glasses and cups ring on clashing overtones the way real objects do. Each person stands somewhere specific, and the ones further away lose their consonants and pick up more of the room.</p>
+    <p>To use this while you work, put <b>Melody</b> near 20 and <b>Room</b> near 70. The tune stops competing for your attention and turns into texture.</p>
+  </div>
+
+  <h2 class="prompt"><span class="ps1">hensap@pixelized:~$</span> cafetune --specs</h2>
+  <ul class="spec">
+    <li><span>engine</span><span>Web Audio, hand-scheduled, no libraries and no audio files</span></li>
+    <li><span>harmony</span><span>six jazz loops, reshuffled every four to eight bars, ~38 chords</span></li>
+    <li><span>voices</span><span>sawtooth source through three moving formant filters</span></li>
+    <li><span>crowd</span><span>one person at a quiet moment, nine at a busy one</span></li>
+    <li><span>page weight</span><span>one HTML file, no tracking, no network calls after load</span></li>
+  </ul>
+</main>
+
+<footer class="colophon">
+  <span>hensap@pixelized:~$ logout</span>
+  <span>&copy; 2026 <a href="https://hendrasaputra.com/">hendrasaputra.com</a> &middot; all rights reserved</span>
+</footer>
+
+<script>
+/* theme: remember the choice, otherwise follow the system, otherwise dark */
+(function(){
+  var root=document.documentElement, btn=document.getElementById("mode"), saved=null;
+  try{ saved=localStorage.getItem("pt-theme"); }catch(e){}
+  var sysLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+  root.setAttribute("data-theme", saved || (sysLight ? "light" : "dark"));
+  btn.addEventListener("click", function(){
+    var next = root.getAttribute("data-theme")==="dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try{ localStorage.setItem("pt-theme", next); }catch(e){}
+    if(window.__cafetuneRepaint) window.__cafetuneRepaint();
+  });
+})();
+</script>
+<script>
+
+(function(){
+"use strict";
+
+/* ============================================================
+   1. AUDIO GRAPH
+   ============================================================ */
+var ctx=null, master, roomSend, room, busLead, busComp, busBass, busDrum, busCafe, analyser;
+var noiseBuf=null, waves={};
+var playing=false;
+
+var mix = { lead:0.70, comp:0.60, bass:0.75, drums:0.55, cafe:0.45, busy:0.60 };
+var bpm = 108, keyRoot = 0;
+
+function mtof(m){ return 440*Math.pow(2,(m-69)/12); }
+function rnd(a,b){ return a+Math.random()*(b-a); }
+function pick(a){ return a[(Math.random()*a.length)|0]; }
+function chance(p){ return Math.random()<p; }
+function mod(n,m){ return ((n%m)+m)%m; }
+
+function makePulse(duty){
+  var n=40, real=new Float32Array(n), imag=new Float32Array(n);
+  for(var i=1;i<n;i++){ imag[i]=(2/(i*Math.PI))*Math.sin(Math.PI*i*duty); }
+  return ctx.createPeriodicWave(real,imag);
+}
+
+function makeRoom(){
+  var len=Math.floor(ctx.sampleRate*1.4);
+  var b=ctx.createBuffer(2,len,ctx.sampleRate);
+  for(var c=0;c<2;c++){
+    var d=b.getChannelData(c);
+    for(var i=0;i<len;i++){
+      var t=i/len;
+      d[i]=(Math.random()*2-1)*Math.pow(1-t,2.6)*(i<ctx.sampleRate*0.012?0.25:1);
+    }
+  }
+  return b;
+}
+
+function initAudio(){
+  ctx = new (window.AudioContext||window.webkitAudioContext)();
+
+  waves[0.5]=makePulse(0.5); waves[0.25]=makePulse(0.25); waves[0.125]=makePulse(0.125);
+
+  noiseBuf = ctx.createBuffer(1, ctx.sampleRate*2, ctx.sampleRate);
+  var nd=noiseBuf.getChannelData(0);
+  for(var i=0;i<nd.length;i++) nd[i]=Math.random()*2-1;
+
+  master = ctx.createGain(); master.gain.value=0.0;
+  var lim = ctx.createDynamicsCompressor();
+  lim.threshold.value=-12; lim.knee.value=8; lim.ratio.value=4;
+  lim.attack.value=0.004; lim.release.value=0.22;
+
+  room = ctx.createConvolver(); room.buffer=makeRoom();
+  roomSend = ctx.createGain(); roomSend.gain.value=0.16;
+  roomSend.connect(room); room.connect(lim);
+
+  analyser = ctx.createAnalyser(); analyser.fftSize=512; analyser.smoothingTimeConstant=0.72;
+
+  function bus(v){ var g=ctx.createGain(); g.gain.value=v; g.connect(lim); g.connect(roomSend); g.connect(analyser); return g; }
+  busLead=bus(mix.lead); busComp=bus(mix.comp); busBass=bus(mix.bass);
+  busDrum=bus(mix.drums); busCafe=bus(mix.cafe*0.9);
+
+  lim.connect(master); master.connect(ctx.destination);
+}
+
+/* ============================================================
+   2. INSTRUMENT VOICES
+   ============================================================ */
+function chip(t, midi, dur, o){
+  o=o||{};
+  var dest=o.dest||busLead, peak=o.gain||0.16, duty=o.duty||0.5;
+  var osc=ctx.createOscillator();
+  osc.setPeriodicWave(waves[duty]);
+  osc.frequency.setValueAtTime(mtof(midi),t);
+  var g=ctx.createGain();
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(peak, t+0.006);
+  g.gain.exponentialRampToValueAtTime(peak*0.6, t+Math.min(0.22,dur*0.55));
+  g.gain.exponentialRampToValueAtTime(0.0001, t+dur+0.04);
+  osc.connect(g); g.connect(dest);
+  if(o.vib && dur>0.28){
+    var lfo=ctx.createOscillator(), la=ctx.createGain();
+    lfo.frequency.value=5.6; la.gain.value=0;
+    la.gain.setValueAtTime(0,t+0.16);
+    la.gain.linearRampToValueAtTime(o.vib, t+0.34);
+    lfo.connect(la); la.connect(osc.detune);
+    lfo.start(t); lfo.stop(t+dur+0.06);
+  }
+  osc.start(t); osc.stop(t+dur+0.07);
+}
+
+/* one oscillator cycling chord tones very fast = the classic NES chord */
+function chipChord(t, midis, dur, o){
+  o=o||{};
+  var peak=o.gain||0.09, duty=o.duty||0.25, rate=o.rate||(1/58);
+  var osc=ctx.createOscillator();
+  osc.setPeriodicWave(waves[duty]);
+  var g=ctx.createGain();
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(peak,t+0.006);
+  g.gain.exponentialRampToValueAtTime(peak*0.5,t+dur*0.6);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur+0.03);
+  var i=0;
+  for(var x=t; x<t+dur; x+=rate){ osc.frequency.setValueAtTime(mtof(midis[i%midis.length]),x); i++; }
+  osc.connect(g); g.connect(o.dest||busComp);
+  osc.start(t); osc.stop(t+dur+0.05);
+}
+
+function bassNote(t, midi, dur, vel){
+  var osc=ctx.createOscillator(); osc.type="triangle";
+  osc.frequency.setValueAtTime(mtof(midi)*1.0,t);
+  var g=ctx.createGain();
+  var peak=0.34*(vel||1);
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(peak,t+0.008);
+  g.gain.exponentialRampToValueAtTime(peak*0.45,t+dur*0.7);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur+0.03);
+  var lp=ctx.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=1400;
+  osc.connect(lp); lp.connect(g); g.connect(busBass);
+  osc.start(t); osc.stop(t+dur+0.05);
+}
+
+function noiseHit(t, dur, filtType, freq, q, peak, dest){
+  var s=ctx.createBufferSource(); s.buffer=noiseBuf;
+  s.playbackRate.value=rnd(0.85,1.15);
+  s.loopStart=rnd(0,1); s.loop=true;
+  var f=ctx.createBiquadFilter(); f.type=filtType; f.frequency.value=freq; f.Q.value=q||1;
+  var g=ctx.createGain();
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(peak,t+0.003);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  s.connect(f); f.connect(g); g.connect(dest||busDrum);
+  s.start(t); s.stop(t+dur+0.02);
+}
+function ride(t,v){ noiseHit(t,0.16,"bandpass",5200,1.2,0.09*v); }
+function hat(t,v){ noiseHit(t,0.035,"highpass",8200,0.7,0.07*v); }
+function snare(t,v){ noiseHit(t,0.13,"bandpass",1850,0.9,0.16*v); }
+function kick(t,v){
+  var o=ctx.createOscillator(); o.type="sine";
+  o.frequency.setValueAtTime(128,t);
+  o.frequency.exponentialRampToValueAtTime(46,t+0.08);
+  var g=ctx.createGain();
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(0.42*v,t+0.006);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+0.20);
+  o.connect(g); g.connect(busDrum);
+  o.start(t); o.stop(t+0.24);
+}
+
+/* ============================================================
+   3. HARMONY
+   ============================================================ */
+var CH = { maj7:[0,4,7,11], m7:[0,3,7,10], dom7:[0,4,7,10], m6:[0,3,7,9], m7b5:[0,3,6,10] };
+var SC = {
+  maj7:[0,2,4,5,7,9,11], m7:[0,2,3,5,7,9,10], dom7:[0,2,4,5,7,9,10],
+  m6:[0,2,3,5,7,9,11],   m7b5:[0,1,3,5,6,8,10]
+};
+var NAME = { maj7:"maj7", m7:"m7", dom7:"7", m6:"m6", m7b5:"m7b5" };
+var LET = ["C","D♭","D","E♭","E","F","G♭","G","A♭","A","B♭","B"];
+
+/* each entry is one bar: [root relative to key, quality] */
+var PROGS = [
+  [[0,"maj7"],[9,"m7"],[2,"m7"],[7,"dom7"]],
+  [[0,"maj7"],[9,"m7"],[2,"m7"],[7,"dom7"],[0,"maj7"],[5,"dom7"],[0,"maj7"],[7,"dom7"]],
+  [[2,"m7"],[7,"dom7"],[0,"maj7"],[0,"maj7"],[4,"m7"],[9,"dom7"],[2,"m7"],[7,"dom7"]],
+  [[5,"maj7"],[5,"m6"],[0,"maj7"],[9,"m7"],[2,"m7"],[7,"dom7"],[0,"maj7"],[7,"dom7"]],
+  [[9,"m7"],[11,"m7b5"],[4,"dom7"],[9,"m7"],[2,"m7"],[7,"dom7"],[0,"maj7"],[7,"dom7"]],
+  [[0,"maj7"],[3,"dom7"],[8,"maj7"],[7,"dom7"]]
+];
+
+var prog = PROGS[0], progPos = 0, barCount = 0;
+var chordNow = {root:0, q:"maj7"};
+
+function advanceChord(){
+  if(progPos >= prog.length){
+    var next = prog;
+    while(next===prog) next = pick(PROGS);
+    prog = next; progPos = 0;
+  }
+  var c = prog[progPos++];
+  chordNow = { root: mod(c[0]+keyRoot,12), q: c[1] };
+  return chordNow;
+}
+function peekNextRoot(){
+  var c = (progPos < prog.length) ? prog[progPos] : prog[0];
+  return mod(c[0]+keyRoot,12);
+}
+function chordTones(c, baseOct){
+  return CH[c.q].map(function(iv){ return 12*baseOct + c.root + iv; });
+}
+/* degree index -> midi, using the chord's own scale, placed near an anchor */
+function degToMidi(deg, c, anchor){
+  var s = SC[c.q];
+  var m = c.root + 12*Math.floor(deg/7) + s[mod(deg,7)];
+  while(m < anchor-6) m += 12;
+  while(m > anchor+6) m -= 12;
+  return m;
+}
+
+/* ============================================================
+   4. THE PLAYERS
+   ============================================================ */
+var lastBass = 40;
+var BASS_LO = 33, BASS_HI = 52;   /* A1 to E3 — a real double-bass register */
+
+/* put a pitch class near an anchor, then force it back inside the register */
+function nearBass(pc, anchor){
+  var n = 36 + mod(pc,12);
+  while(n < anchor-6) n += 12;
+  while(n > anchor+6) n -= 12;
+  while(n < BASS_LO) n += 12;
+  while(n > BASS_HI) n -= 12;
+  return n;
+}
+function walkingBass(c, nextRoot, t, beat){
+  var tones = CH[c.q], out = [];
+  /* beat 1: the root */
+  out.push(nearBass(c.root, lastBass));
+  /* beats 2 and 3: chord tones, sometimes a step away */
+  for(var i=1;i<3;i++){
+    var pc = c.root + pick(tones);
+    if(chance(0.3)) pc += pick([-1,1,2,-2]);
+    out.push(nearBass(pc, out[i-1]));
+  }
+  /* beat 4: land a half-step away from the next chord's root, then step onto it */
+  out.push(nearBass(nextRoot + pick([-1,1]), out[2]));
+
+  for(var b=0;b<4;b++){
+    bassNote(t + b*beat, out[b], beat*0.86, b===0?1:0.82);
+  }
+  lastBass = out[3];
+}
+
+var COMP_SLOTS = [
+  [2,10],[6,14],[2,6,14],[10,14],[4,10],[2,6,10,14],[6,10],[14]
+];
+function comping(c, t, sixteenth, stepT){
+  var voic = chordTones(c,5);
+  if(chance(0.5)) voic = voic.map(function(n,i){ return i===0? n+12 : n; }); // drop the root up
+  voic = voic.slice().sort(function(a,b){ return a-b; });
+  var slots = pick(COMP_SLOTS);
+  for(var i=0;i<slots.length;i++){
+    if(!chance(0.55 + mix.busy*0.4)) continue;
+    var s = slots[i];
+    chipChord(t + stepT(s), voic, sixteenth*rnd(1.6,3.2), {
+      gain: 0.085*rnd(0.8,1.15), duty: chance(0.5)?0.25:0.125
+    });
+  }
+}
+
+var RHY = [
+  [0,2,4,6,8,12],
+  [2,4,6,10,12,14],
+  [0,4,6,8,10,14],
+  [4,6,8,12,14],
+  [0,2,6,8,10,12,14],
+  [6,8,10,12],
+  [0,3,4,6,8,11,12],
+  [2,3,4,8,9,10,12],
+  [0,4,8,12],
+  [8,10,12,14]
+];
+var motif=null, motifAge=0, lastLead=76;
+var LEAD_LO = 69, LEAD_HI = 86;   /* A4 to D6 */
+
+function newMotif(){
+  var r = pick(RHY);
+  var contour=[ (Math.random()*5|0) ];
+  for(var i=1;i<r.length;i++){
+    var step = chance(0.7) ? pick([-1,1,-2,2]) : pick([-4,-3,3,4,5]);
+    contour.push(contour[i-1]+step);
+  }
+  return { r:r, c:contour };
+}
+function mutate(m){
+  var r=m.r.slice(), c=m.c.slice();
+  var k=(Math.random()*c.length)|0;
+  c[k]+=pick([-2,-1,1,2]);
+  if(chance(0.35) && r.length>3){ var d=(Math.random()*r.length)|0; r.splice(d,1); c.splice(d,1); }
+  if(chance(0.3)){ for(var i=0;i<c.length;i++) c[i]+=pick([-1,1]); }
+  return {r:r,c:c};
+}
+
+function melody(c, t, sixteenth, stepT, barInPhrase){
+  if(!motif || motifAge>=pick([4,6,8])){ motif=newMotif(); motifAge=0; }
+  else if(motifAge%2===0){ motif=mutate(motif); }
+  motifAge++;
+
+  var density = 0.45 + mix.busy*0.55;
+  if(barInPhrase===3 || barInPhrase===7) density *= 0.55;   /* breathe at the end of phrases */
+
+  var m = motif;
+  for(var i=0;i<m.r.length;i++){
+    if(!chance(density)) continue;
+    var step = m.r[i];
+    var deg = m.c[i];
+    var midi = degToMidi(deg, c, lastLead);
+    /* on the strong beats, land on a chord tone so the harmony reads clearly */
+    if(step%4===0){
+      var tones = CH[c.q].map(function(iv){ return c.root+iv; });
+      var best=midi, bd=99;
+      for(var o=-1;o<=1;o++) for(var k=0;k<tones.length;k++){
+        var cand = tones[k] + 12*(Math.round((midi-tones[k])/12)+o);
+        var d=Math.abs(cand-midi); if(d<bd){ bd=d; best=cand; }
+      }
+      midi=best;
+    }
+    while(midi<LEAD_LO) midi+=12; while(midi>LEAD_HI) midi-=12;
+    var nextStep = (i+1<m.r.length) ? m.r[i+1] : 16;
+    var dur = Math.max(sixteenth*1.1, (stepT(nextStep)-stepT(step))*0.92);
+    chip(t+stepT(step), midi, dur, {
+      gain: 0.135*rnd(0.85,1.1),
+      duty: 0.25,
+      vib: dur>0.4 ? 16 : 0,
+      dest: busLead
+    });
+    lastLead=midi;
+  }
+
+  /* a fast run into the next phrase */
+  if((barInPhrase===3||barInPhrase===7) && chance(0.35+mix.busy*0.35)){
+    var s=SC[c.q], start=lastLead, dir=chance(0.5)?1:-1;
+    for(var j=0;j<6;j++){
+      var n = degToMidi(j*dir + 3, c, start) ;
+      while(n<LEAD_LO) n+=12; while(n>LEAD_HI) n-=12;
+      chip(t+stepT(10)+j*sixteenth*0.5, n, sixteenth*0.55, {gain:0.10, duty:0.125});
+      lastLead=n;
+    }
+  }
+}
+
+function drums(t, sixteenth, stepT, barInPhrase){
+  var v = 1;
+  /* jazz ride: 1, 2, swung-and-of-2, 3, 4, swung-and-of-4 */
+  var ridePat=[0,4,6,8,12,14];
+  for(var i=0;i<ridePat.length;i++){
+    ride(t+stepT(ridePat[i]), (ridePat[i]%8===0?1:0.72)*v);
+  }
+  if(chance(0.5+mix.busy*0.4)) hat(t+stepT(4),0.9);
+  if(chance(0.5+mix.busy*0.4)) hat(t+stepT(12),0.9);
+  if(chance(0.55)) snare(t+stepT(pick([6,10,14])),0.35);   /* ghost note */
+  if(chance(0.35+mix.busy*0.3)) snare(t+stepT(pick([2,7,11])),0.55);
+  if(chance(0.45)) kick(t+stepT(0),0.7);
+  if(chance(0.4+mix.busy*0.3)) kick(t+stepT(pick([6,10,11])),0.55);
+  if(barInPhrase===7 && chance(0.5)){
+    for(var k=0;k<4;k++) snare(t+stepT(12)+k*sixteenth*0.5, 0.4+k*0.12);
+  }
+}
+
+/* ============================================================
+   5. THE ROOM — voices, not noise
+   ------------------------------------------------------------
+   A crowd is not a hiss. It is dozens of separate voices, each
+   with a pitch, moving vowel shapes and a syllable rhythm. So
+   every murmur here is a real synthesised utterance: a buzzing
+   vocal source pushed through three moving formant filters,
+   chopped into syllables, and placed somewhere in the room.
+   ============================================================ */
+var cafeNodes=[], cafeTimer=null, cafeSession=0;
+
+/* a place to stand in the room */
+function cafeIn(pan, wet){
+  var g=ctx.createGain();
+  if(ctx.createStereoPanner){
+    var p=ctx.createStereoPanner(); p.pan.value=Math.max(-1,Math.min(1,pan));
+    g.connect(p); p.connect(busCafe);
+  } else g.connect(busCafe);
+  /* the further away someone is, the more of the room you hear instead of them */
+  if(wet){ var w=ctx.createGain(); w.gain.value=wet; g.connect(w); w.connect(roomSend); }
+  return g;
+}
+
+/* vowel formants, in Hz: [F1, F2, F3] */
+var VOWELS=[
+  [730,1090,2440], /* ah */
+  [530,1840,2480], /* eh */
+  [270,2290,3010], /* ee */
+  [570,840,2410],  /* oh */
+  [300,870,2240],  /* oo */
+  [660,1720,2410]  /* ae */
+];
+
+/* one person saying one thing */
+function utterance(t, o){
+  o=o||{};
+  var dur  = o.dur  || rnd(0.5,1.9);
+  var dist = (o.dist!==undefined)? o.dist : rnd(0.25,1);      /* 0 = next table, 1 = far corner */
+  var f0   = o.f0   || (chance(0.5)? rnd(92,142) : rnd(158,228));
+  var lvl  = (o.gain||0.075) * (1 - dist*0.62);
+  var pan  = (o.pan!==undefined)? o.pan : rnd(-0.85,0.85);
+  var out  = cafeIn(pan, dist*0.20);
+
+  /* the voice box: a buzz plus a little breath */
+  var osc=ctx.createOscillator(); osc.type="sawtooth";
+  osc.frequency.setValueAtTime(f0,t);
+  osc.frequency.linearRampToValueAtTime(f0*rnd(1.02,1.16), t+dur*0.35);
+  osc.frequency.linearRampToValueAtTime(                    /* statements fall, questions rise */
+    chance(0.18)? f0*rnd(1.18,1.4) : f0*rnd(0.7,0.88), t+dur);
+
+  var breath=ctx.createBufferSource(); breath.buffer=noiseBuf; breath.loop=true;
+  breath.playbackRate.value=rnd(0.8,1.25); breath.loopStart=rnd(0,1);
+  var bg=ctx.createGain(); bg.gain.value=0.3;
+
+  var src=ctx.createGain(); src.gain.value=1;
+  osc.connect(src); breath.connect(bg); bg.connect(src);
+
+  var env=ctx.createGain(); env.gain.setValueAtTime(0.0001,t);
+  var lp=ctx.createBiquadFilter(); lp.type="lowpass";
+  lp.frequency.value = 1500 + (1-dist)*2600;                 /* far voices lose their consonants */
+  env.connect(lp); lp.connect(out);
+
+  /* three formants in parallel is what makes it read as a mouth */
+  var nf = dist>0.62 ? 2 : 3;
+  var vow = pick(VOWELS), fq=[], fw=[1,0.55,0.24], fQ=[7,10,12];
+  for(var i=0;i<nf;i++){
+    var bp=ctx.createBiquadFilter(); bp.type="bandpass";
+    bp.frequency.setValueAtTime(vow[i],t); bp.Q.value=fQ[i];
+    var fg=ctx.createGain(); fg.gain.value=fw[i];
+    src.connect(bp); bp.connect(fg); fg.connect(env);
+    fq.push(bp);
+  }
+
+  /* syllables: about 4 a second, never falling to silence between them */
+  var syl = Math.max(2, Math.round(dur*rnd(3.2,5.2)));
+  var step = dur/syl, floorV = Math.max(lvl*0.07, 0.00012);
+  for(var sIdx=0; sIdx<syl; sIdx++){
+    var st = t + sIdx*step;
+    var peak = Math.max(lvl*rnd(0.55,1.0)*(sIdx===0?0.75:1), 0.0002);
+    env.gain.exponentialRampToValueAtTime(peak, st+step*0.3);
+    env.gain.exponentialRampToValueAtTime(floorV, st+step*0.93);
+    var v=pick(VOWELS);
+    for(var k=0;k<nf;k++) fq[k].frequency.setTargetAtTime(v[k], st, step*0.22);
+  }
+  env.gain.exponentialRampToValueAtTime(0.0001, t+dur+0.1);
+
+  osc.start(t); osc.stop(t+dur+0.14);
+  breath.start(t); breath.stop(t+dur+0.14);
+}
+
+/* a short laugh: fast voiced bursts falling in pitch */
+function laugh(t){
+  var f0=chance(0.5)? rnd(120,160) : rnd(190,250);
+  var n=3+((Math.random()*3)|0), pan=rnd(-0.7,0.7), d=rnd(0.6,1.0);
+  for(var i=0;i<n;i++){
+    utterance(t+i*0.16, {dur:0.13, f0:f0*Math.pow(0.9,i), dist:d, pan:pan, gain:0.1});
+  }
+}
+
+/* ---- glass, china and cutlery: inharmonic partials, not noise ---- */
+function struck(t, base, ratios, decay, level, pan, bright){
+  var out=cafeIn(pan);
+  for(var i=0;i<ratios.length;i++){
+    var f=base*ratios[i]*rnd(0.995,1.006);
+    if(f>15000) continue;
+    var o=ctx.createOscillator(); o.type="sine"; o.frequency.value=f;
+    var g=ctx.createGain();
+    var pk=Math.max(level/Math.pow(i+1,1.35), 0.0003);
+    var dk=decay/Math.pow(i+1,0.55);                      /* high partials die first */
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(pk,t+0.0018);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dk);
+    o.connect(g); g.connect(out);
+    o.start(t); o.stop(t+dk+0.03);
+  }
+  noiseHit(t, 0.012, "highpass", bright||5200, 0.7, level*0.5, out);
+}
+/* thin glass rings long and high */
+function clink(t){
+  struck(t, pick([1750,2150,2600,3050,3600]), [1,2.41,3.83,5.62,7.9],
+         rnd(0.45,1.1), 0.085, rnd(-0.8,0.8), 6200);
+}
+/* a cup set on a saucer: dull, short, low */
+function cupDown(t){
+  var pan=rnd(-0.7,0.7);
+  struck(t, pick([620,760,900]), [1,1.9,2.9,4.3], rnd(0.09,0.18), 0.07, pan, 2400);
+  noiseHit(t,0.05,"lowpass",700,0.8,0.05,cafeIn(pan));
+}
+/* spoon going round a mug */
+function spoonStir(t){
+  var pan=rnd(-0.6,0.6), n=3+((Math.random()*4)|0), gap=rnd(0.085,0.13);
+  for(var i=0;i<n;i++){
+    struck(t+i*gap+rnd(-0.012,0.012), pick([2400,2900,3300]), [1,2.3,3.7,5.1],
+           rnd(0.05,0.11), 0.045, pan, 5000);
+  }
+}
+function chairScrape(t){
+  var pan=rnd(-0.8,0.8), out=cafeIn(pan), d=rnd(0.25,0.5);
+  var s=ctx.createBufferSource(); s.buffer=noiseBuf; s.loop=true; s.playbackRate.value=rnd(0.5,0.8);
+  var f=ctx.createBiquadFilter(); f.type="bandpass"; f.frequency.setValueAtTime(rnd(300,500),t);
+  f.frequency.linearRampToValueAtTime(rnd(700,1200),t+d); f.Q.value=3.5;
+  var g=ctx.createGain();
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(0.05,t+0.05);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+d);
+  s.connect(f); f.connect(g); g.connect(out);
+  s.start(t); s.stop(t+d+0.05);
+}
+function steam(t){
+  var out=cafeIn(rnd(-0.5,-0.1));
+  var s=ctx.createBufferSource(); s.buffer=noiseBuf; s.loop=true;
+  var f=ctx.createBiquadFilter(); f.type="highpass"; f.frequency.value=2600;
+  var bp=ctx.createBiquadFilter(); bp.type="bandpass"; bp.frequency.setValueAtTime(3400,t); bp.Q.value=1.4;
+  bp.frequency.linearRampToValueAtTime(5200,t+1.6);
+  var g=ctx.createGain();
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(0.05,t+0.25);
+  g.gain.exponentialRampToValueAtTime(0.045,t+1.3);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+2.0);
+  s.connect(f); f.connect(bp); bp.connect(g); g.connect(out);
+  s.start(t); s.stop(t+2.1);
+}
+function doorBell(t){
+  var pan=rnd(0.4,0.9);
+  struck(t,      1180, [1,2.76,5.4,8.9], 0.9, 0.07, pan, 7000);
+  struck(t+0.11, 1570, [1,2.76,5.4,8.9], 0.8, 0.055, pan, 7000);
+  if(chance(0.6)) utterance(t+rnd(0.7,1.6), {dist:0.35, pan:pan*0.7, gain:0.09});
+}
+function grinder(t){
+  var out=cafeIn(rnd(-0.6,-0.2));
+  var s=ctx.createBufferSource(); s.buffer=noiseBuf; s.loop=true; s.playbackRate.value=0.4;
+  var f=ctx.createBiquadFilter(); f.type="bandpass"; f.frequency.value=900; f.Q.value=1.6;
+  var g=ctx.createGain();
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(0.045,t+0.12);
+  g.gain.exponentialRampToValueAtTime(0.04,t+1.1);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+1.5);
+  s.connect(f); f.connect(g); g.connect(out);
+  s.start(t); s.stop(t+1.6);
+}
+
+/* ---- keeping the room running ---- */
+function startCafe(){
+  var mySession = ++cafeSession;
+
+  /* barely-there room tone: air handling, traffic outside. Not the crowd. */
+  function bed(freq,q,vol,rate,type){
+    var s=ctx.createBufferSource(); s.buffer=noiseBuf; s.loop=true; s.playbackRate.value=rate;
+    var f=ctx.createBiquadFilter(); f.type=type||"bandpass"; f.frequency.value=freq; f.Q.value=q;
+    var g=ctx.createGain(); g.gain.value=vol;
+    s.connect(f); f.connect(g); g.connect(busCafe);
+    s.start(); cafeNodes.push(s);
+    return g;
+  }
+  var air    = bed(240,0.5,0.030,0.4,"lowpass");
+  var street = bed(700,0.6,0.012,0.6);
+
+  /* the crowd: separate voices, arriving in waves */
+  function babble(){
+    if(!playing || mySession!==cafeSession) return;
+    var busy=mix.busy;
+    var burst = 1 + Math.round(busy*3);
+    for(var i=0;i<burst;i++){
+      if(chance(0.55+busy*0.4)){
+        utterance(ctx.currentTime + rnd(0.02,0.75), {
+          dist: rnd(0.15,1),
+          gain: 0.06 + busy*0.045
+        });
+      }
+    }
+    if(chance(0.05+busy*0.09)) laugh(ctx.currentTime+rnd(0.1,0.8));
+    setTimeout(babble, rnd(0.45,1.35)*(1.55-busy*1.0)*1000);
+  }
+  babble();
+
+  /* the room breathes: it fills up and empties out */
+  function wander(){
+    if(!playing || mySession!==cafeSession) return;
+    var t=ctx.currentTime, busy=mix.busy;
+    air.gain.setTargetAtTime(0.018+busy*0.030,t,2.0);
+    street.gain.setTargetAtTime(0.006+busy*0.016,t,2.0);
+    setTimeout(wander, rnd(1800,3600));
+  }
+  wander();
+
+  scheduleFoley(mySession);
+}
+
+function scheduleFoley(session){
+  if(!playing || session!==cafeSession) return;
+  var t=ctx.currentTime+0.05, r=Math.random(), busy=mix.busy;
+  if(r<0.30)      clink(t);
+  else if(r<0.50) cupDown(t);
+  else if(r<0.63) spoonStir(t);
+  else if(r<0.74) chairScrape(t);
+  else if(r<0.84) steam(t);
+  else if(r<0.93) doorBell(t);
+  else            grinder(t);
+  var gap = rnd(1.6, 6.5) * (1.45 - busy*0.8);
+  cafeTimer = setTimeout(function(){ scheduleFoley(session); }, gap*1000);
+}
+
+/* ============================================================
+   6. SCHEDULER
+   ============================================================ */
+var nextBarTime=0, lookahead=null, swing=0.62;
+var timeline=[];   /* {t, dur, chord, bar} for the display */
+
+function scheduleBar(t){
+  var beat = 60/bpm;
+  var barDur = beat*4;
+  var sixteenth = barDur/16;
+  function stepT(s){
+    var x = s*sixteenth;
+    if(s%4===2) x += swing*sixteenth*0.66;
+    else if(s%2===1) x += swing*sixteenth*0.30;
+    return x;
+  }
+  var c = advanceChord();
+  var barInPhrase = barCount % 8;
+
+  walkingBass(c, peekNextRoot(), t, beat);
+  comping(c, t, sixteenth, stepT);
+  melody(c, t, sixteenth, stepT, barInPhrase);
+  drums(t, sixteenth, stepT, barInPhrase);
+
+  timeline.push({t:t, dur:barDur, chord:c, bar:barCount});
+  if(timeline.length>8) timeline.shift();
+  barCount++;
+  return barDur;
+}
+
+function tick(){
+  if(!playing) return;
+  while(nextBarTime < ctx.currentTime + 0.4){
+    nextBarTime += scheduleBar(nextBarTime);
+  }
+}
+
+/* ============================================================
+   7. DISPLAY
+   ============================================================ */
+var cv=document.getElementById("viz"), g2=cv.getContext("2d");
+var freqData=null, patrons=[];
+var COL={};
+function refreshColors(){
+  var cs=getComputedStyle(document.documentElement);
+  function t(n,f){ var v=cs.getPropertyValue(n).trim(); return v||f; }
+  COL={ bg:t("--bg2","#141108"), amber:t("--amber","#ffb000"), blue:t("--blue","#8b9bff"),
+        signal:t("--signal","#ff5a3c"), dim:t("--dim","#6f6040"), ink:t("--ink","#e8dcc0"),
+        line:t("--line","#2a2210") };
+}
+refreshColors();
+window.__cafetuneRepaint = refreshColors;
+var calmMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function seedPatrons(){
+  patrons=[];
+  for(var i=0;i<14;i++) patrons.push({x:20+i*42+rnd(-6,6), h:rnd(0,1), p:rnd(0,6.28)});
+}
+seedPatrons();
+
+function draw(){
+  requestAnimationFrame(draw);
+  var W=cv.width, H=cv.height;
+  g2.fillStyle=COL.bg; g2.fillRect(0,0,W,H);
+
+  /* pixel floor line */
+  g2.fillStyle=COL.line; g2.fillRect(0,H-16,W,16);
+
+  if(!playing || !ctx){
+    g2.fillStyle=COL.dim;
+    g2.font='12px "IBM Plex Mono", monospace';
+    g2.fillText("hensap@pixelized:~$ cafetune --open", 16, H/2);
+    return;
+  }
+  if(!freqData) freqData=new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(freqData);
+
+  /* patrons: how many stand up is driven by the busy fader */
+  var visible = Math.round(2 + mix.busy*12);
+  var now = ctx.currentTime;
+  for(var i=0;i<patrons.length;i++){
+    if(i>=visible) continue;
+    var p=patrons[i];
+    var bob = calmMotion ? 0 : Math.sin(now*1.6 + p.p)*2;
+    var hh = 20 + p.h*10;
+    g2.fillStyle = (i%4===0)? COL.signal : COL.dim;
+    g2.globalAlpha = 0.55;
+    g2.fillRect(p.x, H-16-hh+bob, 12, hh);      /* body */
+    g2.fillRect(p.x+1, H-16-hh-9+bob, 10, 9);   /* head */
+    g2.globalAlpha = 1;
+  }
+
+  /* spectrum bars, drawn as chunky pixels */
+  var bars=32, bw=Math.floor(W/bars);
+  for(var b=0;b<bars;b++){
+    var v = freqData[Math.floor(Math.pow(b/bars,1.6)*90)+2]/255;
+    var h = Math.max(2, Math.round(v*(H-40)/6)*6);
+    g2.fillStyle = b%8===0 ? COL.blue : COL.amber;
+    g2.globalAlpha = 0.9;
+    for(var y=0;y<h;y+=6) g2.fillRect(b*bw+2, H-18-y-5, bw-4, 5);
+    g2.globalAlpha=1;
+  }
+
+  /* beat marker */
+  var cur=null;
+  for(var k=0;k<timeline.length;k++){ if(now>=timeline[k].t && now<timeline[k].t+timeline[k].dur) cur=timeline[k]; }
+  if(cur){
+    var f=(now-cur.t)/cur.dur;
+    g2.fillStyle=COL.ink;
+    g2.fillRect(Math.floor(f*W), 0, 3, 10);
+    var q=Math.floor(f*4);
+    for(var j=0;j<4;j++){
+      g2.fillStyle = j===q? COL.ink : COL.line;
+      g2.fillRect(W-70+j*14, 8, 9, 9);
+    }
+    var nm = LET[cur.chord.root] + NAME[cur.chord.q];
+    if(nm!==lastName){ lastName=nm; el.chord.textContent=nm; el.bar.textContent=cur.bar; }
+    else { el.bar.textContent=cur.bar; }
+  }
+}
+var lastName="";
+
+/* ============================================================
+   8. CONTROLS
+   ============================================================ */
+var el = {
+  chord:document.getElementById("chord"),
+  bar:document.getElementById("barnum"),
+  status:document.getElementById("status"),
+  power:document.getElementById("power")
+};
+
+function setBus(){
+  if(!ctx) return;
+  var t=ctx.currentTime;
+  busLead.gain.setTargetAtTime(mix.lead*0.9,t,0.05);
+  busComp.gain.setTargetAtTime(mix.comp*0.9,t,0.05);
+  busBass.gain.setTargetAtTime(mix.bass*0.9,t,0.05);
+  busDrum.gain.setTargetAtTime(mix.drums*0.9,t,0.05);
+  busCafe.gain.setTargetAtTime(mix.cafe*0.95,t,0.15);
+}
+
+var FADERS = [["lead","f-lead","v-lead"],["comp","f-comp","v-comp"],["bass","f-bass","v-bass"],
+              ["drums","f-drums","v-drums"],["cafe","f-cafe","v-cafe"],["busy","f-busy","v-busy"]];
+FADERS.forEach(function(f){
+  var input=document.getElementById(f[1]), out=document.getElementById(f[2]);
+  input.addEventListener("input",function(){
+    mix[f[0]] = input.value/100;
+    out.textContent = input.value;
+    setBus();
+  });
+});
+
+var bpmIn=document.getElementById("bpm"), bpmOut=document.getElementById("bpmout");
+bpmIn.addEventListener("input",function(){ bpm=+bpmIn.value; bpmOut.textContent=bpm+" bpm"; });
+
+Array.prototype.forEach.call(document.querySelectorAll(".key"),function(btn){
+  btn.addEventListener("click",function(){
+    Array.prototype.forEach.call(document.querySelectorAll(".key"),function(b){ b.setAttribute("aria-pressed","false"); });
+    btn.setAttribute("aria-pressed","true");
+    keyRoot = +btn.dataset.key;
+    progPos = prog.length;   /* switch key cleanly at the next loop */
+  });
+});
+
+el.power.addEventListener("click",function(){
+  if(!playing){
+    if(!ctx) initAudio();
+    ctx.resume();
+    playing=true;
+    barCount=0; progPos=prog.length; motif=null; timeline=[];
+    nextBarTime = ctx.currentTime + 0.15;
+    setBus();
+    master.gain.cancelScheduledValues(ctx.currentTime);
+    master.gain.setValueAtTime(0.0001,ctx.currentTime);
+    master.gain.exponentialRampToValueAtTime(0.9,ctx.currentTime+1.2);
+    startCafe();
+    lookahead = setInterval(tick, 60);
+    tick();
+    el.power.textContent="Close up"; el.power.dataset.on="true";
+    el.status.textContent="open"; el.status.dataset.open="true";
+  } else {
+    var t=ctx.currentTime;
+    master.gain.cancelScheduledValues(t);
+    master.gain.setValueAtTime(master.gain.value,t);
+    master.gain.exponentialRampToValueAtTime(0.0001,t+0.8);
+    playing=false;
+    clearInterval(lookahead); clearTimeout(cafeTimer);
+    var dying = cafeNodes; cafeNodes = [];
+    setTimeout(function(){
+      dying.forEach(function(n){ try{ n.stop(); }catch(e){} });
+    },900);
+    el.power.textContent="Open the cafe"; el.power.dataset.on="false";
+    el.status.textContent="closed"; el.status.dataset.open="false"; el.chord.textContent="—";
+  }
+});
+
+draw();
+})();
+
+</script>
+</body>
+</html>
